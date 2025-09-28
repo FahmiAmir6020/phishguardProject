@@ -5,9 +5,8 @@
   "description": "A real-time phishing detection extension.",
   "permissions": [
     "activeTab",
-    "storage",
-    "webRequest",
-    "scripting"
+    "scripting",
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -22,10 +21,6 @@
       "css": ["styles.css"]
     }
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon.png"
-  },
   "icons": {
     "128": "icon.png"
   }

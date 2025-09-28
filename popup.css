@@ -1,0 +1,147 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    width: 500px;
+    margin: 0;
+    background-color: #f8f9fa;
+}
+
+.container {
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+}
+
+h1 {
+    font-size: 22px;
+    color: #343a40;
+    margin: 0;
+}
+
+.instructions {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+textarea#headerInput {
+    width: 98%;
+    height: 150px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: monospace;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+button#inspectBtn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button#inspectBtn:hover {
+    background-color: #0056b3;
+}
+
+.hidden {
+    display: none;
+}
+
+.result-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.result-container h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #495057;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.summary {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.summary.clean { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.summary.suspicious { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.summary.malicious { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.summary.unknown { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+
+#reasons ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+#reasons li {
+    font-size: 15px;
+    padding: 10px;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+#reasons li:last-child {
+    border-bottom: none;
+}
+
+.recommendations {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ced4da;
+}
+.recommendations h4 {
+    margin-top: 0;
+    color: #dc3545;
+}
+
+.actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    font-size: 13px;
+    color: #007bff;
+    background-color: transparent;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #007bff;
+    color: #fff;
+}

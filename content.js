@@ -1,21 +1,41 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "PHISHING_DETECTED") {
-    // Create the warning overlay
-    const warningDiv = document.createElement("div");
-    warningDiv.className = "phishguard-warning";
-    warningDiv.innerHTML = `
-      <div>
-        <h1>Phishing Attempt Detected!</h1>
-        <p>This website at <strong>${request.url}</strong> is suspected of being a phishing site.</p>
-        <p>We strongly advise you not to enter any personal information.</p>
+    // Prevent duplicate warnings
+    if (document.querySelector('.phishguard-overlay')) {
+      return;
+    }
+
+    // Create the overlay container
+    const overlay = document.createElement("div");
+    overlay.className = "phishguard-overlay";
+
+    // Create the warning box with the specific reason
+    const warningBox = document.createElement("div");
+    warningBox.className = "phishguard-warning-box";
+    warningBox.innerHTML = `
+      <h1>Warning: Potential Threat</h1>
+      <p>${request.reason || 'This site is considered suspicious.'}</p>
+      <p>URL: <strong>${request.url}</strong></p>
+      <div class="phishguard-button-container">
+        <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
+        <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>
       </div>
     `;
 
-    // Block the rest of the page
-    document.body.innerHTML = '';
-    document.body.appendChild(warningDiv);
+    // Append the warning box to the overlay
+    overlay.appendChild(warningBox);
+    // Append the overlay to the body
+    document.body.appendChild(overlay);
 
-    // Stop all other scripts from running
-    window.stop();
+    // Add event listeners for the buttons
+    document.getElementById("phishguard-back-btn").addEventListener("click", () => {
+      window.history.back();
+    });
+
+    document.getElementById("phishguard-proceed-btn").addEventListener("click", () => {
+      overlay.remove();
+    });
+
+    sendResponse({ status: "Warning displayed" });
   }
 });

@@ -1,16 +1,88 @@
-/* Styles for the phishing warning overlay will go here */
-.phishguard-warning {
+/* Main container for the warning overlay */
+.phishguard-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 0, 0, 0.8);
-  color: white;
-  z-index: 999999;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 999998; /* Below the warning box */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
+}
+
+/* The warning box itself */
+.phishguard-warning-box {
+  background-color: #ffffff;
+  color: #333;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  width: 450px;
+  max-width: 90%;
   text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  z-index: 999999;
+  border: 1px solid #e0e0e0;
+}
+
+.phishguard-warning-box h1 {
+  color: #00529b; /* A calm blue */
+  font-size: 24px;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.phishguard-warning-box p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+.phishguard-warning-box p strong {
+  word-break: break-all;
+}
+
+/* Container for the buttons */
+.phishguard-button-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* General button styles */
+.phishguard-button {
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.phishguard-button:active {
+    transform: scale(0.98);
+}
+
+/* "Go Back" button (Primary action) */
+.phishguard-button--back {
+  background-color: #007bff;
+  color: white;
+}
+
+.phishguard-button--back:hover {
+  background-color: #0056b3;
+}
+
+/* "Proceed" button (Secondary action) */
+.phishguard-button--proceed {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.phishguard-button--proceed:hover {
+  background-color: #ced4da;
 }

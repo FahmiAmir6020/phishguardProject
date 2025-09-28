@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PhishGuard Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>PhishGuard Settings</h1>
+    <p>Enter your VirusTotal API key. This is stored locally and is required for domain reputation checks.</p>
+    <div class="input-group">
+      <input type="password" id="apiKey" placeholder="Your VirusTotal API Key">
+      <button id="saveBtn">Save</button>
+    </div>
+    <p id="status" class="status-message"></p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
-// Import external scripts.
-importScripts('email_inspector.js');
-importScripts('adblocker.js');
+import { inspect } from './email_inspector.js';
+import { setupAdblocker } from './adblocker.js';
 
 const API_KEY = "YOUR_API_KEY_HERE";
 

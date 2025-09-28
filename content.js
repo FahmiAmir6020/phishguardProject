@@ -109,13 +109,20 @@ function runHtmlAnalysis() {
 // --- Message Listener ---
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === "PHISHING_DETECTED") {
-    displayWarning(request.reason, request.url);
-    sendResponse({ status: "VirusTotal warning displayed" });
-  } else if (request.type === "ANALYZE_HTML") {
-    // Wait a brief moment for the DOM to be more settled before analyzing.
-    setTimeout(runHtmlAnalysis, 500);
-    sendResponse({ status: "HTML analysis scheduled" });
+  switch (request.type) {
+    case "PHISHING_DETECTED":
+      displayWarning(request.reason, request.url);
+      sendResponse({ status: "VirusTotal warning displayed" });
+      // Synchronous response, no need to return true.
+      break;
+    case "ANALYZE_HTML":
+      // This is asynchronous, so we return true to keep the channel open.
+      setTimeout(runHtmlAnalysis, 500);
+      sendResponse({ status: "HTML analysis scheduled" });
+      return true;
+    default:
+      // For any other message types (like INSPECT_EMAIL), do nothing.
+      // This allows other listeners in the extension (like in background.js) to handle them.
+      break;
   }
-  return true; // Keep the message channel open for async response if needed.
 });

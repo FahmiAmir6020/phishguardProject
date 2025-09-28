@@ -22,7 +22,7 @@ const RULE_ID_START = 1000; // A starting ID for our dynamic rules to avoid conf
  * Sets up the ad and tracker blocking rules using the declarativeNetRequest API.
  * It first clears any existing rules from this extension and then adds the new ones.
  */
-async function setupAdblocker() {
+export async function setupAdblocker() {
     console.log("PhishGuard: Setting up adblocker rules...");
 
     // Get existing rules to remove them before adding new ones.

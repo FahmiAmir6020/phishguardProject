@@ -9,12 +9,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const overlay = document.createElement("div");
     overlay.className = "phishguard-overlay";
 
-    // Create the warning box
+    // Create the warning box with the specific reason
     const warningBox = document.createElement("div");
     warningBox.className = "phishguard-warning-box";
     warningBox.innerHTML = `
-      <h1>Suspicious Website</h1>
-      <p>This website at <strong>${request.url}</strong> looks like a potential phishing attempt. We advise you to go back.</p>
+      <h1>Warning: Potential Threat</h1>
+      <p>${request.reason || 'This site is considered suspicious.'}</p>
+      <p>URL: <strong>${request.url}</strong></p>
       <div class="phishguard-button-container">
         <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
         <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>

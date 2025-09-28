@@ -5,9 +5,9 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(217, 0, 0, 0.5); /* Red tinted overlay */
   backdrop-filter: blur(5px);
-  z-index: 999998; /* Below the warning box */
+  z-index: 999998;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,18 +19,19 @@
   color: #333;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   width: 450px;
   max-width: 90%;
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   z-index: 999999;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #dc3545; /* Red border */
 }
 
 .phishguard-warning-box h1 {
-  color: #00529b; /* A calm blue */
-  font-size: 24px;
+  color: #dc3545; /* Strong Red */
+  font-size: 26px;
+  font-weight: 700;
   margin-top: 0;
   margin-bottom: 15px;
 }
@@ -69,12 +70,12 @@
 
 /* "Go Back" button (Primary action) */
 .phishguard-button--back {
-  background-color: #007bff;
+  background-color: #dc3545; /* Red */
   color: white;
 }
 
 .phishguard-button--back:hover {
-  background-color: #0056b3;
+  background-color: #c82333; /* Darker Red */
 }
 
 /* "Proceed" button (Secondary action) */

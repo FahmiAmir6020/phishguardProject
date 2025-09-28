@@ -5,7 +5,6 @@
   "description": "A real-time phishing detection extension.",
   "permissions": [
     "activeTab",
-    "storage",
     "scripting",
     "webNavigation"
   ],

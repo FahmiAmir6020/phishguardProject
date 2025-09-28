@@ -31,8 +31,8 @@ async function checkDomainReputation(domain) {
     const data = await response.json();
     const stats = data.data.attributes.last_analysis_stats;
 
-    if (stats.malicious > 0 || stats.phishing > 0) {
-      console.log(`VirusTotal flagged domain ${domain} as malicious or for phishing.`);
+    if (stats.malicious > 0 || stats.suspicious > 0) {
+      console.log(`VirusTotal flagged domain ${domain} as malicious or suspicious.`);
       return true;
     }
   } catch (error) {
@@ -60,7 +60,7 @@ async function handleNavigation(details) {
   }
 
   if (isMalicious) {
-    const reason = "This site is flagged as malicious or for phishing by VirusTotal.";
+    const reason = "This site is flagged as malicious or suspicious by VirusTotal.";
     console.log(`Threat detected at ${url}. Reason: ${reason}`);
     chrome.tabs.sendMessage(tabId, {
       type: "PHISHING_DETECTED",

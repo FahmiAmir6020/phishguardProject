@@ -69,6 +69,14 @@ async function handleNavigation(details) {
       url: url,
       reason: reason
     });
+  } else {
+    // If the VirusTotal check is clean, ask the content script to perform HTML analysis.
+    // Use a try-catch block in case the content script is not yet ready.
+    try {
+      chrome.tabs.sendMessage(tabId, { type: "ANALYZE_HTML" });
+    } catch (e) {
+      console.log(`Could not send message to content script for tab ${tabId}. It may have been closed.`, e);
+    }
   }
 }
 

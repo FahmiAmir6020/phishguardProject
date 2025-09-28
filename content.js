@@ -1,61 +1,50 @@
 /**
- * Injects the warning overlay into the page. This function is designed to be
- * called safely even when the DOM is not fully loaded.
+ * Injects the warning overlay instantly. It stops the page load and
+ * injects the UI without waiting for the DOM to be fully ready.
  */
 function injectWarningOverlay(reason, url) {
-    // Since this script now runs at document_start, we must not assume document.body exists.
-    // We will wait until the DOM is ready enough to be manipulated.
-    const doInject = () => {
-        // Prevent duplicate warnings if the message is received multiple times.
-        if (document.querySelector('.phishguard-overlay')) {
-            return;
-        }
+    // Stop the page from loading any further resources or running scripts.
+    // This is the most critical step for immediate action.
+    window.stop();
 
-        // Stop the page from loading any further resources or running scripts.
-        window.stop();
-
-        // Create the overlay container.
-        const overlay = document.createElement("div");
-        overlay.className = "phishguard-overlay";
-
-        // Create the warning box.
-        const warningBox = document.createElement("div");
-        warningBox.className = "phishguard-warning-box";
-        warningBox.innerHTML = `
-            <h1>Warning: Potential Threat Detected</h1>
-            <p>${reason || 'This site is considered suspicious.'}</p>
-            <p>URL: <strong>${url}</strong></p>
-            <div class="phishguard-button-container">
-                <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
-                <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>
-            </div>
-        `;
-
-        // Append to the body if it exists, otherwise to the root element.
-        const parent = document.body || document.documentElement;
-        overlay.appendChild(warningBox);
-        parent.appendChild(overlay);
-
-        // Add event listeners for the buttons.
-        document.getElementById("phishguard-back-btn").addEventListener("click", () => {
-            window.history.back();
-        });
-
-        document.getElementById("phishguard-proceed-btn").addEventListener("click", () => {
-            // This is intentionally left blank to allow the user to "escape" the overlay
-            // if they choose to proceed, but the page will remain stopped.
-            // A more advanced implementation might reload the page without the extension's interference.
-            overlay.remove();
-        });
-    };
-
-    if (document.readyState === 'loading') {
-        // If the document is still loading, wait for the DOM content to be ready.
-        document.addEventListener('DOMContentLoaded', doInject, { once: true });
-    } else {
-        // If the DOM is already interactive or complete, inject immediately.
-        doInject();
+    // Prevent duplicate warnings.
+    if (document.querySelector('.phishguard-overlay')) {
+        return;
     }
+
+    // Since this runs at document_start, document.body may not exist.
+    // We replace the entire document content with our warning.
+    document.documentElement.innerHTML = '';
+
+    // Create the overlay container.
+    const overlay = document.createElement("div");
+    overlay.className = "phishguard-overlay";
+
+    // Create the warning box.
+    const warningBox = document.createElement("div");
+    warningBox.className = "phishguard-warning-box";
+    warningBox.innerHTML = `
+        <h1>Warning: Potential Threat Detected</h1>
+        <p>${reason || 'This site is considered suspicious.'}</p>
+        <p>URL: <strong>${url}</strong></p>
+        <div class="phishguard-button-container">
+            <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
+            <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>
+        </div>
+    `;
+
+    // Append the overlay to the now-empty root element.
+    overlay.appendChild(warningBox);
+    document.documentElement.appendChild(overlay);
+
+    // Add event listeners for the buttons.
+    document.getElementById("phishguard-back-btn").addEventListener("click", () => {
+        window.history.back();
+    });
+
+    document.getElementById("phishguard-proceed-btn").addEventListener("click", () => {
+        overlay.remove();
+    });
 }
 
 /**

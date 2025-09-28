@@ -1,78 +1,85 @@
 /**
- * Displays the phishing warning overlay.
- * @param {string} reason - The reason why the site was flagged.
- * @param {string} url - The URL of the flagged site.
+ * Injects the warning overlay into the page. This function is designed to be
+ * called safely even when the DOM is not fully loaded.
  */
-function displayWarning(reason, url) {
-  // Prevent duplicate warnings.
-  if (document.querySelector('.phishguard-overlay')) {
-    return;
-  }
+function injectWarningOverlay(reason, url) {
+    // Since this script now runs at document_start, we must not assume document.body exists.
+    // We will wait until the DOM is ready enough to be manipulated.
+    const doInject = () => {
+        // Prevent duplicate warnings if the message is received multiple times.
+        if (document.querySelector('.phishguard-overlay')) {
+            return;
+        }
 
-  // Create the overlay container.
-  const overlay = document.createElement("div");
-  overlay.className = "phishguard-overlay";
+        // Stop the page from loading any further resources or running scripts.
+        window.stop();
 
-  // Create the warning box with the specific reason.
-  const warningBox = document.createElement("div");
-  warningBox.className = "phishguard-warning-box";
-  warningBox.innerHTML = `
-    <h1>Warning: Potential Threat Detected</h1>
-    <p>${reason || 'This site is considered suspicious.'}</p>
-    <p>URL: <strong>${url}</strong></p>
-    <div class="phishguard-button-container">
-      <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
-      <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>
-    </div>
-  `;
+        // Create the overlay container.
+        const overlay = document.createElement("div");
+        overlay.className = "phishguard-overlay";
 
-  // Append the warning box to the overlay, and the overlay to the body.
-  overlay.appendChild(warningBox);
-  document.body.appendChild(overlay);
+        // Create the warning box.
+        const warningBox = document.createElement("div");
+        warningBox.className = "phishguard-warning-box";
+        warningBox.innerHTML = `
+            <h1>Warning: Potential Threat Detected</h1>
+            <p>${reason || 'This site is considered suspicious.'}</p>
+            <p>URL: <strong>${url}</strong></p>
+            <div class="phishguard-button-container">
+                <button class="phishguard-button phishguard-button--back" id="phishguard-back-btn">Go Back</button>
+                <button class="phishguard-button phishguard-button--proceed" id="phishguard-proceed-btn">Proceed Anyway</button>
+            </div>
+        `;
 
-  // Add event listeners for the buttons.
-  document.getElementById("phishguard-back-btn").addEventListener("click", () => {
-    window.history.back();
-  });
+        // Append to the body if it exists, otherwise to the root element.
+        const parent = document.body || document.documentElement;
+        overlay.appendChild(warningBox);
+        parent.appendChild(overlay);
 
-  document.getElementById("phishguard-proceed-btn").addEventListener("click", () => {
-    overlay.remove();
-  });
+        // Add event listeners for the buttons.
+        document.getElementById("phishguard-back-btn").addEventListener("click", () => {
+            window.history.back();
+        });
+
+        document.getElementById("phishguard-proceed-btn").addEventListener("click", () => {
+            // This is intentionally left blank to allow the user to "escape" the overlay
+            // if they choose to proceed, but the page will remain stopped.
+            // A more advanced implementation might reload the page without the extension's interference.
+            overlay.remove();
+        });
+    };
+
+    if (document.readyState === 'loading') {
+        // If the document is still loading, wait for the DOM content to be ready.
+        document.addEventListener('DOMContentLoaded', doInject, { once: true });
+    } else {
+        // If the DOM is already interactive or complete, inject immediately.
+        doInject();
+    }
 }
 
 /**
  * Checks for login forms that submit credentials to a different domain.
- * @returns {string|null} A reason string if a suspicious form is found, otherwise null.
  */
 function checkForSuspiciousForms() {
-  const pageHostname = window.location.hostname;
-  const forms = document.querySelectorAll('form');
+    const pageHostname = window.location.hostname;
+    const forms = document.querySelectorAll('form[action]');
 
-  for (const form of forms) {
-    // Only check forms that contain a password field.
-    if (!form.querySelector('input[type="password"]')) {
-      continue;
-    }
+    for (const form of forms) {
+        if (!form.querySelector('input[type="password"]')) continue;
 
-    const formAction = form.action;
-    if (formAction) {
-      try {
-        const actionHostname = new URL(formAction).hostname;
-        // Flag if the form's domain is different and not a subdomain of the page's domain.
-        if (actionHostname !== pageHostname && !actionHostname.endsWith(`.${pageHostname}`)) {
-           return `This page contains a login form that sends your credentials to a different domain (${actionHostname}).`;
-        }
-      } catch (e) {
-        // Ignore invalid URLs in action attributes, which are likely relative paths.
-      }
+        try {
+            const actionHostname = new URL(form.action).hostname;
+            if (actionHostname !== pageHostname && !actionHostname.endsWith(`.${pageHostname}`)) {
+                return `This page contains a login form that sends your credentials to a different domain (${actionHostname}).`;
+            }
+        } catch (e) { /* Ignore relative or invalid URLs */ }
     }
-  }
-  return null;
+    return null;
 }
 
 /**
  * Checks for password fields that are hidden from the user.
- * @returns {string|null} A reason string if a hidden password field is found, otherwise null.
  */
 function checkForHiddenPasswordFields() {
     const passwordFields = document.querySelectorAll('input[type="password"]');
@@ -81,48 +88,48 @@ function checkForHiddenPasswordFields() {
         if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) < 0.1) {
             return "This page contains a hidden password field, which could be used to secretly capture your input.";
         }
-
-        const rect = field.getBoundingClientRect();
-        if (rect.right < 0 || rect.bottom < 0 || rect.left > window.innerWidth || rect.top > window.innerHeight) {
-            return "This page contains a password field that is positioned off-screen, which could be used to secretly capture your input.";
-        }
     }
     return null;
 }
 
 /**
- * Runs all HTML analysis checks.
+ * Runs all HTML analysis checks once the DOM is ready.
  */
 function runHtmlAnalysis() {
-    const suspiciousFormReason = checkForSuspiciousForms();
-    if (suspiciousFormReason) {
-        displayWarning(suspiciousFormReason, window.location.href);
-        return;
-    }
+    const doAnalysis = () => {
+        const formReason = checkForSuspiciousForms();
+        if (formReason) {
+            injectWarningOverlay(formReason, window.location.href);
+            return;
+        }
 
-    const hiddenFieldReason = checkForHiddenPasswordFields();
-    if (hiddenFieldReason) {
-        displayWarning(hiddenFieldReason, window.location.href);
+        const hiddenFieldReason = checkForHiddenPasswordFields();
+        if (hiddenFieldReason) {
+            injectWarningOverlay(hiddenFieldReason, window.location.href);
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', doAnalysis, { once: true });
+    } else {
+        doAnalysis();
     }
 }
 
 // --- Message Listener ---
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  switch (request.type) {
-    case "PHISHING_DETECTED":
-      displayWarning(request.reason, request.url);
-      sendResponse({ status: "VirusTotal warning displayed" });
-      // Synchronous response, no need to return true.
-      break;
-    case "ANALYZE_HTML":
-      // This is asynchronous, so we return true to keep the channel open.
-      setTimeout(runHtmlAnalysis, 500);
-      sendResponse({ status: "HTML analysis scheduled" });
-      return true;
-    default:
-      // For any other message types (like INSPECT_EMAIL), do nothing.
-      // This allows other listeners in the extension (like in background.js) to handle them.
-      break;
-  }
+    switch (request.type) {
+        case "PHISHING_DETECTED":
+            injectWarningOverlay(request.reason, request.url);
+            sendResponse({ status: "Phishing warning displayed" });
+            break;
+        case "ANALYZE_HTML":
+            runHtmlAnalysis();
+            sendResponse({ status: "HTML analysis scheduled" });
+            break;
+        default:
+            // Ignore other message types.
+            break;
+    }
 });

@@ -7,7 +7,6 @@
     "activeTab",
     "storage",
     "scripting",
-    "notifications",
     "webNavigation"
   ],
   "host_permissions": [
@@ -23,10 +22,6 @@
       "css": ["styles.css"]
     }
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon.png"
-  },
   "icons": {
     "128": "icon.png"
   }

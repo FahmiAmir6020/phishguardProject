@@ -3,6 +3,8 @@ const trustedDomains = [
   "linkedin.com", "amazon.com", "apple.com", "microsoft.com", "netflix.com", "github.com"
 ];
 
+const VIRUSTOTAL_API_KEY = "PASTE-YOUR-API-KEY-HERE";
+
 // --- Cryptography Helper ---
 async function sha256(str) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
@@ -55,21 +57,23 @@ function checkUrlSimilarity(url) {
   return false;
 }
 
-// --- VirusTotal Reputation Logic (Corrected) ---
+// --- VirusTotal Reputation Logic ---
 
-async function checkUrlReputation(url, apiKey) {
-  if (!apiKey) return false;
+async function checkUrlReputation(url) {
+  if (!VIRUSTOTAL_API_KEY || VIRUSTOTAL_API_KEY === "PASTE-YOUR-API-KEY-HERE") {
+      return false; // Don't run if the key is not set
+  }
 
   try {
-    const urlId = await sha256(url); // Correctly use SHA-256 hash
+    const urlId = await sha256(url);
     const apiUrl = `https://www.virustotal.com/api/v3/urls/${urlId}`;
 
     const response = await fetch(apiUrl, {
       method: 'GET',
-      headers: { 'x-apikey': apiKey }
+      headers: { 'x-apikey': VIRUSTOTAL_API_KEY }
     });
 
-    if (response.status === 404) { // 404 means URL not found in VT, which is fine
+    if (response.status === 404) {
         return false;
     }
     if (!response.ok) {
@@ -93,41 +97,15 @@ async function checkUrlReputation(url, apiKey) {
 // --- Main Extension Logic ---
 
 async function handleNavigation(details) {
-  // Only run on the main frame to avoid checking URLs of iframes.
-  if (details.frameId !== 0) {
-    return;
-  }
+  if (details.frameId !== 0) return;
 
   const { url, tabId } = details;
   let reason = null;
 
-  // First, check for URL similarity, which doesn't require an API key.
   if (checkUrlSimilarity(url)) {
     reason = "URL is suspiciously similar to a trusted site.";
-  } else {
-    // If no similarity match, proceed to the reputation check.
-    const { vtApiKey } = await chrome.storage.local.get('vtApiKey');
-
-    if (vtApiKey) {
-      // If the key exists, perform the reputation check.
-      if (await checkUrlReputation(url, vtApiKey)) {
-        reason = "This site is flagged as potentially malicious by VirusTotal.";
-      }
-    } else {
-      // If the key is missing, notify the user once per session.
-      const { notified_about_key } = await chrome.storage.session.get(['notified_about_key']);
-      if (!notified_about_key) {
-        chrome.notifications.create('missingApiKeyNotif', {
-          type: 'basic',
-          iconUrl: 'icon.png',
-          title: 'PhishGuard API Key Needed',
-          message: 'Please set your VirusTotal API key in the extension settings for full protection.',
-          priority: 1
-        });
-        // Set a flag to prevent spamming the user with notifications.
-        await chrome.storage.session.set({ notified_about_key: true });
-      }
-    }
+  } else if (await checkUrlReputation(url)) {
+    reason = "This site is flagged as potentially malicious by VirusTotal.";
   }
 
   if (reason) {
@@ -140,8 +118,6 @@ async function handleNavigation(details) {
   }
 }
 
-// Listen for when the browser commits to a new navigation.
-// This is more reliable than onUpdated for ensuring the warning appears consistently.
 chrome.webNavigation.onCommitted.addListener(handleNavigation, {
   url: [{ schemes: ['http', 'https'] }]
 });

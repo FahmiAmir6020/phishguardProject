@@ -1,5 +1,6 @@
-// Import the email inspection logic.
+// Import external scripts.
 importScripts('email_inspector.js');
+importScripts('adblocker.js');
 
 const API_KEY = "YOUR_API_KEY_HERE";
 
@@ -95,4 +96,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Return true to indicate an asynchronous response.
     return true;
   }
+});
+
+// Listener for when the extension is installed or updated.
+chrome.runtime.onInstalled.addListener(() => {
+  setupAdblocker();
 });

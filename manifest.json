@@ -6,7 +6,9 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "webNavigation"
+    "webNavigation",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "<all_urls>"

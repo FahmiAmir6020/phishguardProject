@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = apiKeyInput.value.trim();
     if (apiKey) {
       chrome.storage.local.set({ vtApiKey: apiKey }, () => {
+        // Also reset the session notification flag so the user can be notified again if they remove the key later.
+        chrome.storage.session.set({ notified_about_key: false });
         statusEl.textContent = 'API Key saved successfully!';
         statusEl.className = 'status-message success';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);

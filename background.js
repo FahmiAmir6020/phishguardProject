@@ -97,13 +97,33 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const url = changeInfo.url;
     let reason = null;
 
-    // Retrieve API key from storage first
-    const { vtApiKey } = await chrome.storage.local.get('vtApiKey');
-
+    // First, check for URL similarity, which doesn't require an API key.
     if (checkUrlSimilarity(url)) {
       reason = "URL is suspiciously similar to a trusted site.";
-    } else if (await checkUrlReputation(url, vtApiKey)) {
-      reason = "This site is flagged as potentially malicious by VirusTotal.";
+    } else {
+      // If no similarity match, proceed to the reputation check.
+      const { vtApiKey } = await chrome.storage.local.get('vtApiKey');
+
+      if (vtApiKey) {
+        // If the key exists, perform the reputation check.
+        if (await checkUrlReputation(url, vtApiKey)) {
+          reason = "This site is flagged as potentially malicious by VirusTotal.";
+        }
+      } else {
+        // If the key is missing, notify the user once per session.
+        const { notified_about_key } = await chrome.storage.session.get(['notified_about_key']);
+        if (!notified_about_key) {
+          chrome.notifications.create('missingApiKeyNotif', {
+            type: 'basic',
+            iconUrl: 'icon.png',
+            title: 'PhishGuard API Key Needed',
+            message: 'Please set your VirusTotal API key in the extension settings for full protection.',
+            priority: 1
+          });
+          // Set a flag to prevent spamming the user with notifications.
+          await chrome.storage.session.set({ notified_about_key: true });
+        }
+      }
     }
 
     if (reason) {

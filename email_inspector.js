@@ -171,7 +171,7 @@ function checkDomainSimilarity(headers, result) {
  * @param {string} rawHeaders - The raw email header text.
  * @returns {object} The structured JSON result.
  */
-function inspect(rawHeaders) {
+export function inspect(rawHeaders) {
     console.debug("Starting email header inspection.");
     const headers = parseHeaders(rawHeaders);
     const result = {

@@ -92,47 +92,56 @@ async function checkUrlReputation(url, apiKey) {
 
 // --- Main Extension Logic ---
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url) {
-    const url = changeInfo.url;
-    let reason = null;
+async function handleNavigation(details) {
+  // Only run on the main frame to avoid checking URLs of iframes.
+  if (details.frameId !== 0) {
+    return;
+  }
 
-    // First, check for URL similarity, which doesn't require an API key.
-    if (checkUrlSimilarity(url)) {
-      reason = "URL is suspiciously similar to a trusted site.";
+  const { url, tabId } = details;
+  let reason = null;
+
+  // First, check for URL similarity, which doesn't require an API key.
+  if (checkUrlSimilarity(url)) {
+    reason = "URL is suspiciously similar to a trusted site.";
+  } else {
+    // If no similarity match, proceed to the reputation check.
+    const { vtApiKey } = await chrome.storage.local.get('vtApiKey');
+
+    if (vtApiKey) {
+      // If the key exists, perform the reputation check.
+      if (await checkUrlReputation(url, vtApiKey)) {
+        reason = "This site is flagged as potentially malicious by VirusTotal.";
+      }
     } else {
-      // If no similarity match, proceed to the reputation check.
-      const { vtApiKey } = await chrome.storage.local.get('vtApiKey');
-
-      if (vtApiKey) {
-        // If the key exists, perform the reputation check.
-        if (await checkUrlReputation(url, vtApiKey)) {
-          reason = "This site is flagged as potentially malicious by VirusTotal.";
-        }
-      } else {
-        // If the key is missing, notify the user once per session.
-        const { notified_about_key } = await chrome.storage.session.get(['notified_about_key']);
-        if (!notified_about_key) {
-          chrome.notifications.create('missingApiKeyNotif', {
-            type: 'basic',
-            iconUrl: 'icon.png',
-            title: 'PhishGuard API Key Needed',
-            message: 'Please set your VirusTotal API key in the extension settings for full protection.',
-            priority: 1
-          });
-          // Set a flag to prevent spamming the user with notifications.
-          await chrome.storage.session.set({ notified_about_key: true });
-        }
+      // If the key is missing, notify the user once per session.
+      const { notified_about_key } = await chrome.storage.session.get(['notified_about_key']);
+      if (!notified_about_key) {
+        chrome.notifications.create('missingApiKeyNotif', {
+          type: 'basic',
+          iconUrl: 'icon.png',
+          title: 'PhishGuard API Key Needed',
+          message: 'Please set your VirusTotal API key in the extension settings for full protection.',
+          priority: 1
+        });
+        // Set a flag to prevent spamming the user with notifications.
+        await chrome.storage.session.set({ notified_about_key: true });
       }
     }
-
-    if (reason) {
-      console.log(`Phishing attempt detected at ${url}. Reason: ${reason}`);
-      chrome.tabs.sendMessage(tabId, {
-        type: "PHISHING_DETECTED",
-        url: url,
-        reason: reason
-      });
-    }
   }
+
+  if (reason) {
+    console.log(`Phishing attempt detected at ${url}. Reason: ${reason}`);
+    chrome.tabs.sendMessage(tabId, {
+      type: "PHISHING_DETECTED",
+      url: url,
+      reason: reason
+    });
+  }
+}
+
+// Listen for when the browser commits to a new navigation.
+// This is more reliable than onUpdated for ensuring the warning appears consistently.
+chrome.webNavigation.onCommitted.addListener(handleNavigation, {
+  url: [{ schemes: ['http', 'https'] }]
 });

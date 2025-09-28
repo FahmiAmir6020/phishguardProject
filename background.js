@@ -43,6 +43,27 @@ async function checkDomainReputation(domain) {
 
 // --- URL Scanning Logic ---
 
+/**
+ * Sends a message to a content script with a retry mechanism.
+ * This is crucial because the content script might not be ready to receive messages
+ * immediately, especially when injected at `document_start`.
+ * @param {number} tabId The ID of the tab to send the message to.
+ * @param {object} message The message object to send.
+ * @param {number} retries The number of retries remaining.
+ */
+function sendMessageWithRetry(tabId, message, retries = 3) {
+  chrome.tabs.sendMessage(tabId, message, (response) => {
+    if (chrome.runtime.lastError && retries > 0) {
+      console.log(`PhishGuard: Could not send message to tab ${tabId}, retrying... (${retries} retries left)`);
+      setTimeout(() => {
+        sendMessageWithRetry(tabId, message, retries - 1);
+      }, 250); // Retry after a short delay
+    } else if (chrome.runtime.lastError) {
+      console.error(`PhishGuard: Failed to send message to tab ${tabId} after multiple retries.`, chrome.runtime.lastError.message);
+    }
+  });
+}
+
 async function handleNavigation(details) {
   if (details.frameId !== 0) {
     return;
@@ -62,17 +83,13 @@ async function handleNavigation(details) {
   if (isMalicious) {
     const reason = "This site is flagged as malicious or suspicious by VirusTotal.";
     console.log(`Threat detected at ${url}. Reason: ${reason}`);
-    chrome.tabs.sendMessage(tabId, {
+    sendMessageWithRetry(tabId, {
       type: "PHISHING_DETECTED",
       url: url,
       reason: reason
     });
   } else {
-    try {
-      chrome.tabs.sendMessage(tabId, { type: "ANALYZE_HTML" });
-    } catch (e) {
-      console.log(`Could not send message to content script for tab ${tabId}. It may have been closed.`, e);
-    }
+    sendMessageWithRetry(tabId, { type: "ANALYZE_HTML" });
   }
 }
 

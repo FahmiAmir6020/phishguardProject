@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PhishGuard Email Inspector</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="icon.png" alt="PhishGuard Icon" class="logo">
+            <h1>Email Header Inspector</h1>
+        </header>
+        <p class="instructions">Paste the full raw email headers below to check for signs of spoofing or phishing.</p>
+        <textarea id="headerInput" placeholder="Paste raw email headers here..."></textarea>
+        <button id="inspectBtn">Inspect Headers</button>
+
+        <div id="resultContainer" class="result-container hidden">
+            <h2>Inspection Result</h2>
+            <div id="summary" class="summary"></div>
+            <div id="reasons"></div>
+            <div class="actions">
+                 <button id="copyJsonBtn" class="action-btn">Copy Full Report (JSON)</button>
+            </div>
+            <pre id="details" class="hidden"></pre>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

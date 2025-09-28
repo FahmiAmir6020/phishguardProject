@@ -1,9 +1,11 @@
+// Import the email inspection logic.
+importScripts('email_inspector.js');
+
 const API_KEY = "YOUR_API_KEY_HERE";
 
-// --- VirusTotal Reputation Logic ---
+// --- VirusTotal Reputation Logic (for URL scanning) ---
 
 async function checkDomainReputation(domain) {
-  // Don't run the check if the API key placeholder is still present.
   if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
     console.log("VirusTotal API key is not set. Skipping reputation check.");
     return false;
@@ -17,7 +19,6 @@ async function checkDomainReputation(domain) {
       headers: { 'x-apikey': API_KEY }
     });
 
-    // A 404 means the domain is not in VirusTotal's database, which we treat as safe.
     if (response.status === 404) {
       return false;
     }
@@ -30,7 +31,6 @@ async function checkDomainReputation(domain) {
     const data = await response.json();
     const stats = data.data.attributes.last_analysis_stats;
 
-    // Check for malicious or phishing flags as per the requirements.
     if (stats.malicious > 0 || stats.phishing > 0) {
       console.log(`VirusTotal flagged domain ${domain} as malicious or for phishing.`);
       return true;
@@ -38,14 +38,12 @@ async function checkDomainReputation(domain) {
   } catch (error) {
     console.error(`Error checking domain ${domain} with VirusTotal:`, error);
   }
-
   return false;
 }
 
-// --- Main Extension Logic ---
+// --- URL Scanning Logic ---
 
 async function handleNavigation(details) {
-  // Only run on the main frame to avoid checking URLs of iframes.
   if (details.frameId !== 0) {
     return;
   }
@@ -58,7 +56,7 @@ async function handleNavigation(details) {
     isMalicious = await checkDomainReputation(domain);
   } catch (e) {
     console.error(`Could not parse URL to get domain: ${url}`, e);
-    return; // Cannot proceed without a valid domain.
+    return;
   }
 
   if (isMalicious) {
@@ -70,8 +68,6 @@ async function handleNavigation(details) {
       reason: reason
     });
   } else {
-    // If the VirusTotal check is clean, ask the content script to perform HTML analysis.
-    // Use a try-catch block in case the content script is not yet ready.
     try {
       chrome.tabs.sendMessage(tabId, { type: "ANALYZE_HTML" });
     } catch (e) {
@@ -80,7 +76,23 @@ async function handleNavigation(details) {
   }
 }
 
-// Listen for when the browser commits to a new navigation.
+// --- Event Listeners ---
+
+// Listener for URL scanning on page navigation.
 chrome.webNavigation.onCommitted.addListener(handleNavigation, {
   url: [{ schemes: ['http', 'https'] }]
+});
+
+// Listener for email header inspection requests from the popup.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Ensure the message is from our extension's popup.
+  if (sender.id === chrome.runtime.id && request.type === 'INSPECT_EMAIL') {
+    console.log("Background script received INSPECT_EMAIL request.");
+    if (request.headers) {
+      const result = inspect(request.headers);
+      sendResponse(result);
+    }
+    // Return true to indicate an asynchronous response.
+    return true;
+  }
 });
